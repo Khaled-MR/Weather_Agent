@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌦️ Automated Weather Emergency Response</title>
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">
+                🌦️ Automated Weather Emergency Response
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Real-time weather analysis and disaster response planning
+            </p>
+        </header>
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 mb-6">
+            <!-- Input Section -->
+            <div class="mb-6">
+                <label for="cityInput" class="block text-lg font-semibold text-gray-700 mb-3">
+                    Enter the city name to check weather conditions:
+                </label>
+                <div class="flex gap-3">
+                    <input 
+                        type="text" 
+                        id="cityInput" 
+                        placeholder="e.g., London, New York, Karachi"
+                        class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none text-lg"
+                        onkeypress="if(event.key === 'Enter') analyzeWeather()"
+                    >
+                    <button 
+                        onclick="analyzeWeather()" 
+                        id="analyzeBtn"
+                        class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                    >
+                        Analyze
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden text-center py-8">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+                <p class="mt-4 text-gray-600">Analyzing weather conditions...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+                <p class="text-red-700 font-medium" id="errorText"></p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" class="hidden">
+                <!-- Current Weather Card -->
+                <div class="mb-4">
+                    <button 
+                        onclick="toggleSection('weatherSection')"
+                        class="w-full text-left bg-blue-50 hover:bg-blue-100 p-4 rounded-lg flex justify-between items-center transition-colors"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">📊 Current Weather</h2>
+                        <span id="weatherToggle" class="text-2xl">▼</span>
+                    </button>
+                    <div id="weatherSection" class="mt-2 p-4 bg-gray-50 rounded-lg">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="weatherData">
+                            <!-- Weather data will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Disaster Assessment Card -->
+                <div class="mb-4">
+                    <button 
+                        onclick="toggleSection('disasterSection')"
+                        class="w-full text-left bg-orange-50 hover:bg-orange-100 p-4 rounded-lg flex justify-between items-center transition-colors"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">🚨 Disaster Assessment</h2>
+                        <span id="disasterToggle" class="text-2xl">▼</span>
+                    </button>
+                    <div id="disasterSection" class="mt-2 p-4 bg-gray-50 rounded-lg">
+                        <div class="space-y-3" id="disasterData">
+                            <!-- Disaster data will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Plan Card -->
+                <div class="mb-4">
+                    <button 
+                        onclick="toggleSection('responseSection')"
+                        class="w-full text-left bg-green-50 hover:bg-green-100 p-4 rounded-lg flex justify-between items-center transition-colors"
+                    >
+                        <h2 class="text-xl font-bold text-gray-800">📋 Emergency Response Plan</h2>
+                        <span id="responseToggle" class="text-2xl">▼</span>
+                    </button>
+                    <div id="responseSection" class="mt-2 p-4 bg-gray-50 rounded-lg">
+                        <div class="prose max-w-none" id="responseData">
+                            <!-- Response plan will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Section -->
+                <div class="mt-6 pt-6 border-t-2 border-gray-200">
+                    <p class="text-lg font-semibold text-gray-700 mb-4">
+                        Do you want to send this report via email?
+                    </p>
+                    <div class="flex gap-3">
+                        <button 
+                            onclick="sendEmail()" 
+                            id="sendEmailBtn"
+                            class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg"
+                        >
+                            📧 Yes, Send Email
+                        </button>
+                        <button 
+                            onclick="resetForm()" 
+                            class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors duration-200"
+                        >
+                            🔄 Analyze Another City
+                        </button>
+                    </div>
+                    <div id="emailStatus" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Modal -->
+        <div id="approvalModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl mx-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">⚠️ Human Approval Required</h2>
+                <p class="text-gray-600 mb-6">
+                    A <strong>Low/Medium severity</strong> weather alert has been detected. 
+                    Human approval is required before sending the email alert.
+                </p>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6 rounded">
+                    <p class="text-sm text-gray-700" id="approvalDetails">
+                        <!-- Approval details will be inserted here -->
+                    </p>
+                </div>
+                
+                <div class="flex gap-4 justify-end">
+                    <button 
+                        onclick="handleApproval(false)" 
+                        id="rejectBtn"
+                        class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                    >
+                        ❌ Reject
+                    </button>
+                    <button 
+                        onclick="handleApproval(true)" 
+                        id="approveBtn"
+                        class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+                    >
+                        ✅ Approve & Send Email
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-600 text-sm mt-8">
+            <p>Weather Emergency Response System v1.0</p>
+        </footer>
+    </div>
+
+    <script>
+        // Store current analysis data for email sending
+        let currentAnalysisData = null;
+        let currentVerificationId = null;
+
+        /**
+         * Analyze weather for the entered city
+         * Sends POST request to /analyze endpoint
+         */
+        async function analyzeWeather() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim();
+            
+            // Validate input
+            if (!city) {
+                showError('Please enter a city name');
+                return;
+            }
+
+            // Show loading, hide results and errors
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('analyzeBtn').disabled = true;
+            document.getElementById('analyzeBtn').textContent = 'Analyzing...';
+
+            try {
+                // Send POST request to FastAPI backend
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ city: city })
+                });
+
+                const data = await response.json();
+
+                // Hide loading indicator
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('analyzeBtn').textContent = 'Analyze';
+
+                if (data.success) {
+                    // Store data for email sending
+                    currentAnalysisData = data;
+                    currentVerificationId = data.verification_id || null;
+                    
+                    // Display results
+                    displayResults(data);
+                    
+                    // Check if approval is needed
+                    if (data.needs_approval && data.verification_id) {
+                        showApprovalModal(data);
+                    }
+                } else {
+                    showError(data.message || 'Failed to analyze weather. Please try again.');
+                }
+            } catch (error) {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('analyzeBtn').textContent = 'Analyze';
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        /**
+         * Display weather analysis results
+         */
+        function displayResults(data) {
+            // Show results section
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            // Display weather data
+            const weatherDataDiv = document.getElementById('weatherData');
+            const weather = data.weather_data;
+            weatherDataDiv.innerHTML = `
+                <div class="bg-white p-3 rounded shadow">
+                    <p class="text-sm text-gray-600">Weather</p>
+                    <p class="text-lg font-semibold">${weather.weather || 'N/A'}</p>
+                </div>
+                <div class="bg-white p-3 rounded shadow">
+                    <p class="text-sm text-gray-600">Temperature</p>
+                    <p class="text-lg font-semibold">${weather.temperature || 'N/A'}°C</p>
+                </div>
+                <div class="bg-white p-3 rounded shadow">
+                    <p class="text-sm text-gray-600">Wind Speed</p>
+                    <p class="text-lg font-semibold">${weather.wind_speed || 'N/A'} m/s</p>
+                </div>
+                <div class="bg-white p-3 rounded shadow">
+                    <p class="text-sm text-gray-600">Humidity</p>
+                    <p class="text-lg font-semibold">${weather.humidity || 'N/A'}%</p>
+                </div>
+                <div class="bg-white p-3 rounded shadow">
+                    <p class="text-sm text-gray-600">Pressure</p>
+                    <p class="text-lg font-semibold">${weather.pressure || 'N/A'} hPa</p>
+                </div>
+                <div class="bg-white p-3 rounded shadow">
+                    <p class="text-sm text-gray-600">Cloud Cover</p>
+                    <p class="text-lg font-semibold">${weather.cloud_cover || 'N/A'}%</p>
+                </div>
+            `;
+
+            // Display disaster assessment
+            const disasterDataDiv = document.getElementById('disasterData');
+            const severityColor = getSeverityColor(data.severity);
+            disasterDataDiv.innerHTML = `
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-600 mb-1">Disaster Type</p>
+                    <p class="text-xl font-bold text-gray-800">${data.disaster_type || 'Unknown'}</p>
+                </div>
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-sm text-gray-600 mb-1">Severity Level</p>
+                    <p class="text-xl font-bold ${severityColor}">${data.severity || 'Unknown'}</p>
+                </div>
+            `;
+
+            // Display response plan
+            const responseDataDiv = document.getElementById('responseData');
+            responseDataDiv.innerHTML = `
+                <div class="bg-white p-4 rounded shadow">
+                    <p class="text-gray-700 whitespace-pre-wrap">${data.response || 'No response plan available'}</p>
+                </div>
+            `;
+
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        /**
+         * Show approval modal when human verification is required
+         */
+        function showApprovalModal(data) {
+            const modal = document.getElementById('approvalModal');
+            const detailsDiv = document.getElementById('approvalDetails');
+            
+            // Format approval details
+            const details = `
+                <strong>City:</strong> ${data.city}<br>
+                <strong>Disaster Type:</strong> ${data.disaster_type}<br>
+                <strong>Severity:</strong> ${data.severity}<br>
+                <strong>Weather:</strong> ${data.weather_data.weather || 'N/A'}<br>
+                <strong>Temperature:</strong> ${data.weather_data.temperature || 'N/A'}°C<br>
+                <strong>Wind Speed:</strong> ${data.weather_data.wind_speed || 'N/A'} m/s
+            `;
+            
+            detailsDiv.innerHTML = details;
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Handle approval/rejection decision
+         */
+        async function handleApproval(approved) {
+            if (!currentVerificationId) {
+                showError('No verification ID available');
+                return;
+            }
+
+            const modal = document.getElementById('approvalModal');
+            const approveBtn = document.getElementById('approveBtn');
+            const rejectBtn = document.getElementById('rejectBtn');
+            
+            // Disable buttons
+            approveBtn.disabled = true;
+            rejectBtn.disabled = true;
+            approveBtn.textContent = approved ? 'Processing...' : '';
+            rejectBtn.textContent = approved ? '' : 'Processing...';
+
+            try {
+                // Send approval decision to backend
+                const response = await fetch('/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        verification_id: currentVerificationId,
+                        approved: approved
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Hide modal
+                modal.classList.add('hidden');
+                
+                // Show result message
+                const emailStatusDiv = document.getElementById('emailStatus');
+                if (data.success) {
+                    const colorClass = approved ? 'green' : 'red';
+                    emailStatusDiv.innerHTML = `
+                        <div class="bg-${colorClass}-50 border-l-4 border-${colorClass}-500 p-4 rounded">
+                            <p class="text-${colorClass}-700 font-semibold">${data.message}</p>
+                        </div>
+                    `;
+                } else {
+                    emailStatusDiv.innerHTML = `
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                            <p class="text-red-700 font-semibold">${data.message}</p>
+                        </div>
+                    `;
+                }
+                
+                // Re-enable buttons
+                approveBtn.disabled = false;
+                rejectBtn.disabled = false;
+                approveBtn.textContent = '✅ Approve & Send Email';
+                rejectBtn.textContent = '❌ Reject';
+                
+            } catch (error) {
+                modal.classList.add('hidden');
+                showError('Error processing approval: ' + error.message);
+                
+                // Re-enable buttons
+                approveBtn.disabled = false;
+                rejectBtn.disabled = false;
+                approveBtn.textContent = '✅ Approve & Send Email';
+                rejectBtn.textContent = '❌ Reject';
+            }
+        }
+
+        /**
+         * Get color class based on severity level
+         */
+        function getSeverityColor(severity) {
+            const sev = severity.toLowerCase();
+            if (sev.includes('critical')) return 'text-red-600';
+            if (sev.includes('high')) return 'text-orange-600';
+            if (sev.includes('medium')) return 'text-yellow-600';
+            return 'text-green-600';
+        }
+
+        /**
+         * Toggle collapsible sections
+         */
+        function toggleSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            const toggle = document.getElementById(sectionId.replace('Section', 'Toggle'));
+            
+            if (section.classList.contains('hidden')) {
+                section.classList.remove('hidden');
+                toggle.textContent = '▼';
+            } else {
+                section.classList.add('hidden');
+                toggle.textContent = '▶';
+            }
+        }
+
+        /**
+         * Send email with the report
+         */
+        async function sendEmail() {
+            if (!currentAnalysisData) {
+                showError('No analysis data available to send');
+                return;
+            }
+
+            const emailStatusDiv = document.getElementById('emailStatus');
+            const sendEmailBtn = document.getElementById('sendEmailBtn');
+            
+            // Disable button and show loading
+            sendEmailBtn.disabled = true;
+            sendEmailBtn.textContent = 'Sending...';
+            emailStatusDiv.innerHTML = '<p class="text-blue-600">Sending email...</p>';
+
+            try {
+                // Format the report text
+                const reportText = formatEmailReport(currentAnalysisData);
+
+                // Send POST request to /send_email endpoint
+                const response = await fetch('/send_email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        city: currentAnalysisData.city,
+                        report_text: reportText
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Re-enable button
+                sendEmailBtn.disabled = false;
+                sendEmailBtn.textContent = '📧 Yes, Send Email';
+
+                if (data.success) {
+                    emailStatusDiv.innerHTML = `
+                        <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                            <p class="text-green-700 font-semibold">${data.message}</p>
+                        </div>
+                    `;
+                } else {
+                    emailStatusDiv.innerHTML = `
+                        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                            <p class="text-red-700 font-semibold">${data.message}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                sendEmailBtn.disabled = false;
+                sendEmailBtn.textContent = '📧 Yes, Send Email';
+                emailStatusDiv.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+                        <p class="text-red-700 font-semibold">Error sending email: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * Format the analysis data into email report text
+         */
+        function formatEmailReport(data) {
+            const weather = data.weather_data;
+            return `🌦️ Weather Emergency Report for ${data.city}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 CURRENT WEATHER CONDITIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Weather Description: ${weather.weather || 'N/A'}
+• Temperature: ${weather.temperature || 'N/A'}°C
+• Wind Speed: ${weather.wind_speed || 'N/A'} m/s
+• Humidity: ${weather.humidity || 'N/A'}%
+• Pressure: ${weather.pressure || 'N/A'} hPa
+• Cloud Cover: ${weather.cloud_cover || 'N/A'}%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚨 DISASTER ASSESSMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Disaster Type: ${data.disaster_type}
+• Severity Level: ${data.severity}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 EMERGENCY RESPONSE PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${data.response}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This is an automated weather alert generated by the Weather Emergency Response System.`;
+        }
+
+        /**
+         * Show error message
+         */
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            errorText.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        /**
+         * Reset form for new analysis
+         */
+        function resetForm() {
+            document.getElementById('cityInput').value = '';
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('emailStatus').innerHTML = '';
+            document.getElementById('approvalModal').classList.add('hidden');
+            currentAnalysisData = null;
+            currentVerificationId = null;
+            document.getElementById('cityInput').focus();
+        }
+    </script>
+</body>
+</html>
+
