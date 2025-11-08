@@ -94,7 +94,7 @@ weather/
 
 The following flowchart illustrates the autonomous agent's process for handling weather-related disaster responses:
 
-![Weather Emergency Response System Workflow](images/workflow.png)
+![Weather Emergency Response System Workflow](images/workflow.jpeg)
 
 *Note: The agent operates autonomously, running continuously to call the weather API at specified intervals. It processes the fetched data within the state graph, ensuring dynamic handling and decision-making based on real-time weather updates.*
 
@@ -112,5 +112,6 @@ The following flowchart illustrates the autonomous agent's process for handling 
 - Human verification prompts (for low/medium severity) are only available in the CLI version
 - All weather checks are automatically logged
 - The system auto-refreshes logs every 30 seconds in the web interface
+
 
 
